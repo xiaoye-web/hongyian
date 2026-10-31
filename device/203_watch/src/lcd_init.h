@@ -54,9 +54,14 @@ void LCD_SetRstPin(int pin);
 #define LCD_CS_Clr()   uapi_gpio_set_val(g_lcd_cs_pin, 0)    //CS
 #define LCD_CS_Set()   uapi_gpio_set_val(g_lcd_cs_pin, 1)
 
-/* 软件 SPI 半周期延时：官方例程不插延时。先给一个较小的 nop 保证时序稳定，
- * 等屏亮后再调。 */
-#define LCD_SPI_NOP      20
+/* 软件 SPI 半周期延时。
+ *
+ * 换成 200 是故意压低时钟到约 400 kHz：官方例程不插延时，实际翻转频率
+ * 在几 MHz 量级；而这块模组每根信号线上都串了 1 kΩ（丝印 102，R14/R10/
+ * R9/R13/R12/R6），加上模组输入端电容和连接器，边沿会被拉缓。
+ * 如果屏一直不响应，先把时钟降到几百 kHz 排除「时序太快」这个变量，
+ * 是代价最小的做法。 */
+#define LCD_SPI_NOP      200
 #define LCD_SPI_DELAY()  do { \
         volatile unsigned int _dl; \
         for (_dl = 0; _dl < LCD_SPI_NOP; _dl++) { __asm__ volatile ("nop"); } \

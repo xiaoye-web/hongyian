@@ -43,11 +43,21 @@ static void watch_entry(void)
     printf("  LCD 1.28\" GC9A01 240x240 + MPU6050 + MAX3010x\r\n");
     printf("==============================================\r\n");
 
-    /* 整板自检：跑在起任务之前，单独占 CPU、单独占 I2C 引脚，
-     * 免得和传感器任务的 I2C 初始化抢总线。
-     * 自检若定位到屏的时钟脚，会自己把 LCD 的 clk 换成那个脚
-     * （见 board_check.c 的 bc_lcd()）。 */
+    /* 整板自检开关。
+     *
+     * 按原理图核对结论（EXB V1 + WEAR V0，有效针号）：
+     *   LCD1-3 SCL  = WEAR J2-8 = EXB J1-9 = IO7
+     *   LCD1-4 SDA  = WEAR J1-9 = EXB J3-9 = IO9
+     *   LCD1-5 DC   = WEAR J1-8 = EXB J3-8 = IO10
+     *   LCD1-6 CS   = WEAR J1-7 = EXB J3-7 = IO11
+     *   LCD1-7 RST  = WEAR J1-6 = EXB J3-6 = IO12
+     * 五根固定信号已无歧义，自检里的全引脚扫描只会先一步把引脚翻乱，
+     * 让后面的最小测试失去意义。所以这里默认关闭，只在需要复测板子
+     * 电气状态时改 1 打开。 */
+#define BOARD_CHECK_ENABLE  0
+#if BOARD_CHECK_ENABLE
     board_check_run();
+#endif
 
     osal_kthread_lock();
 
